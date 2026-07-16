@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "djangospice"
 version = "1.0.0"
-description = "Application Runtime framework for building Django djangospice Apps."
+description = "Django Application Runtime framework for building Djangospice Apps."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
