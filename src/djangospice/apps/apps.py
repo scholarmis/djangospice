@@ -21,6 +21,7 @@ class AppsConfig(AppConfig):
         """
         post_migrate.connect(self.install, sender=self)
         ModuleDiscovery.discover("listeners")
+        ModuleDiscovery.discover("widgets")
         Bootstrap().run()
         
 
