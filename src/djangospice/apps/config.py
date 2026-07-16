@@ -7,12 +7,32 @@ class AppConfig(BaseConfig):
     Base configuration class for custom djangospice applications.
     Extends Django's AppConfig to integrate dependency injection and lifecycle hooks.
     """
-    description = None
-    url = None
-    icon = None
-    is_default = True
-    is_service = False
-    namespace = None
+
+    # Human-readable metadata
+    description: str | None = None
+    url: str | None = None
+    icon: str | None = None
+
+    # Runtime flags
+    is_default: bool = True
+    is_service: bool = False
+
+    # Djangospice namespace (e.g. "billing", "workflow")
+    namespace: str | None = None
+
+    # Django application label.
+    # Defaults to the namespace if provided, otherwise Django derives it
+    # from the application name.
+    label: str | None = None
+
+    def __init__(self, app_name, app_module):
+        super().__init__(app_name, app_module)
+
+        if self.namespace is None:
+            self.namespace = self.name.rsplit(".", 1)[-1]
+
+        if self.label is None:
+            self.label = self.namespace
     
 
     def register(self) -> None:
