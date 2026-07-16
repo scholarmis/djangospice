@@ -3,7 +3,7 @@ from djangospice.apps import AppConfig
 
 class NotificationConfig(AppConfig):
     name = "djangospice.notification"
-    namespace = "notification"
+    label = "notification"
     
     
-namespace = NotificationConfig.namespace
+namespace = NotificationConfig.label

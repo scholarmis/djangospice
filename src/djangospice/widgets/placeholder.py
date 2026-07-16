@@ -1,6 +1,6 @@
 from typing import Any
 
-from djangospice.widgets.base import BaseWidget
+from .base import BaseWidget
 
 
 class Placeholder(BaseWidget):

@@ -1,13 +1,12 @@
 from __future__ import annotations
-from typing import Any
 
 from django.utils.safestring import SafeString
 
-from djangospice.widgets.base import BaseWidget
-from djangospice.widgets.builder import WidgetBuilder
-from djangospice.widgets.cache import WidgetCache
-from djangospice.widgets.exceptions import WidgetNotVisible
-from djangospice.widgets.placeholder import Placeholder
+from .base import BaseWidget
+from .builder import WidgetBuilder
+from .cache import WidgetCache
+from .exceptions import WidgetNotVisible
+from .placeholder import Placeholder
 
 
 class WidgetRenderer:

@@ -3,7 +3,7 @@ from djangospice.apps import AppConfig
 
 class WidgetsConfig(AppConfig):
     name = "djangospice.widgets"
-    namespace = "widgets"
+    label = "widgets"
     
     
-namespace = WidgetsConfig.namespace
+namespace = WidgetsConfig.label

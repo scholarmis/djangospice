@@ -7,21 +7,25 @@ from collections.abc import Iterator
 from django.core.exceptions import ImproperlyConfigured
 
 from djangospice.apps.discovery import ModuleDiscovery
-from djangospice.widgets.base import BaseWidget
+from .base import BaseWidget
 
 logger = logging.getLogger(__name__)
 
 
 class WidgetRegistry:
     """
-    Thread-safe registry for dynamically discovering and storing widget classes.
+    Thread-safe, app-aware registry for dynamically discovering and storing widget classes.
 
     This registry uses an auto-discovery utility to scan the project for
     subclasses of `BaseWidget` inside 'widgets' modules. It utilizes reentrant
     locking (RLock) and double-checked locking patterns to guarantee absolute
     thread safety during lazy initialization, reads, and mutations.
+
+    Widgets are registered using their `widget_key` (formatted as 'app_label.name')
+    to prevent name collisions between different Django apps.
     """
 
+    # Maps 'app_label.widget_name' -> Widget Class
     _widgets: dict[str, type[BaseWidget]] = {}
     _initialized: bool = False
     _lock = threading.RLock()
@@ -52,55 +56,61 @@ class WidgetRegistry:
     @classmethod
     def register(cls, widget: type[BaseWidget]) -> None:
         """
-        Register a widget class in the internal registry mapping.
+        Register an app-aware widget class in the internal registry mapping.
 
         Args:
             widget: The widget class subclassing `BaseWidget`.
 
         Raises:
-            ImproperlyConfigured: If a widget with the same name identifier 
+            ImproperlyConfigured: If a widget with the same app_label and name 
                 is already registered.
         """
+        # Resolve the unique registration key (e.g., 'auth.recent_users')
+        # fallback to using .name if .widget_key is not built yet (safeguard)
+        reg_key = getattr(widget, "widget_key", widget.name)
+
         with cls._lock:
-            if widget.name in cls._widgets:
+            if reg_key in cls._widgets:
+                existing_widget = cls._widgets[reg_key]
                 raise ImproperlyConfigured(
-                    f"BaseWidget '{widget.name}' (`{widget.__name__}`) is already registered."
+                    f"Widget '{widget.name}' in app '{getattr(widget, 'app_label', 'unknown')}' "
+                    f"is already registered by class `{existing_widget.__module__}.{existing_widget.__name__}`. "
+                    f"Conflicting class: `{widget.__module__}.{widget.__name__}`."
                 )
 
-            cls._widgets[widget.name] = widget
+            cls._widgets[reg_key] = widget
 
         logger.debug(
             "Registered widget '%s' (%s).",
-            widget.name,
+            reg_key,
             widget.__module__,
         )
 
     @classmethod
-    def unregister(cls, name: str) -> None:
+    def unregister(cls, widget_key: str) -> None:
         """
-        Remove a widget class from the registry by its name.
+        Remove a widget class from the registry by its registration key.
 
         Args:
-            name: The unique string identifier of the widget to remove.
+            widget_key: The namespaced identifier (e.g., 'myapp.my_widget').
         """
         cls.load()
         with cls._lock:
-            cls._widgets.pop(name, None)
+            cls._widgets.pop(widget_key, None)
 
     @classmethod
-    def get(cls, name: str) -> type[BaseWidget] | None:
+    def get(cls, widget_key: str) -> type[BaseWidget] | None:
         """
-        Retrieve a widget class by its registered name identifier.
+        Retrieve a widget class by its registration key.
 
         Args:
-            name: The string identifier of the widget.
+            widget_key: The namespaced identifier (e.g., 'myapp.my_widget').
 
         Returns:
             The matching widget class, or None if not found.
         """
         cls.load()
-        return cls._widgets.get(name)
-    
+        return cls._widgets.get(widget_key)
 
     @classmethod
     def widgets(cls) -> dict[str, type[BaseWidget]]:
@@ -108,23 +118,26 @@ class WidgetRegistry:
         Retrieve a shallow copy of all registered widget classes.
 
         Returns:
-            A dictionary mapping widget names to their respective classes.
+            A dictionary mapping namespaced registration keys to their respective classes.
         """
         cls.load()
         with cls._lock:
             return cls._widgets.copy()
 
     @classmethod
-    def names(cls) -> tuple[str, ...]:
+    def keys(cls) -> tuple[str, ...]:
         """
-        Retrieve the names of all currently registered widgets.
+        Retrieve the unique registration keys of all currently registered widgets.
 
         Returns:
-            A tuple containing all registered widget string identifiers.
+            A tuple containing all registration keys (e.g., 'myapp.my_widget').
         """
         cls.load()
         with cls._lock:
             return tuple(cls._widgets)
+
+    # Alias for backwards compatibility of registry naming lists
+    names = keys
 
     @classmethod
     def values(cls) -> tuple[type[BaseWidget], ...]:
@@ -151,17 +164,17 @@ class WidgetRegistry:
             cls._initialized = False
 
     @classmethod       
-    def exists(cls, name: str) -> bool:
+    def exists(cls, widget_key: str) -> bool:
         """
-        Check if a widget is currently registered by name.
+        Check if a widget is currently registered by its registration key.
 
         Args:
-            name: The string identifier of the widget.
+            widget_key: The namespaced identifier (e.g., 'myapp.my_widget').
             
         Returns:
             True if the widget is registered, False otherwise.
         """
-        return cls.get(name) is not None
+        return cls.get(widget_key) is not None
 
     @classmethod
     def groups(cls) -> dict[str | None, list[type[BaseWidget]]]:
@@ -175,6 +188,7 @@ class WidgetRegistry:
         groups: dict[str | None, list[type[BaseWidget]]] = {}
 
         for widget in cls.values():
+            # BaseWidget classes still contain groups
             groups.setdefault(widget.group, []).append(widget)
 
         return groups
@@ -183,9 +197,6 @@ class WidgetRegistry:
     def __iter__(cls) -> Iterator[type[BaseWidget]]:
         """
         Iterate over all registered widget classes.
-        
-        Note: As a classmethod, you must call `WidgetRegistry.__iter__()` 
-        or `iter(WidgetRegistry.values())` explicitly.
         """
         return iter(cls.values())
 
@@ -193,12 +204,7 @@ class WidgetRegistry:
     def __len__(cls) -> int:
         """
         Get the total number of registered widgets.
-        
-        Note: As a classmethod, `len(WidgetRegistry)` will fail natively. 
-        Use `WidgetRegistry.__len__()` explicitly.
         """
         cls.load()
         with cls._lock:
             return len(cls._widgets)
-        
- 

@@ -1,29 +1,15 @@
 from importlib import import_module
 from django.apps import AppConfig as BaseConfig
-
-
-class AppConfigMeta(type):
-    def __new__(mcls, name, bases, attrs):
-        cls = super().__new__(mcls, name, bases, attrs)
-
-        if name != "AppConfig":
-            label = getattr(cls, "label", None)
-            app_name = getattr(cls, "name", None)
-
-            if getattr(cls, "namespace", None) is None:
-                if label:
-                    cls.namespace = label
-                elif app_name:
-                    cls.namespace = app_name.rsplit(".", 1)[-1]
-
-        return cls
     
     
-class AppConfig(BaseConfig, metaclass=AppConfigMeta):
+class AppConfig(BaseConfig):
     """
     Base configuration class for custom djangospice applications.
     Extends Django's AppConfig to integrate dependency injection and lifecycle hooks.
     """
+    name: str = None
+    label: str = None
+    verbose_name: str = None
 
     # Human-readable metadata
     description: str | None = None
@@ -34,23 +20,22 @@ class AppConfig(BaseConfig, metaclass=AppConfigMeta):
     is_default: bool = True
     is_service: bool = False
 
-    # Djangospice namespace (e.g. "billing", "workflow")
+    # Djangospice namespace
     namespace: str | None = None
 
-    # Django application label.
-    # Defaults to the namespace if provided, otherwise Django derives it
-    # from the application name.
-    label: str | None = None
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
 
-    def __init__(self, app_name, app_module):
-        super().__init__(app_name, app_module)
+        # 1. Resolve namespace statically
+        # Fallback order: Explicit namespace -> Explicit label -> Module suffix of name
+        if cls.namespace is None:
+            name = getattr(cls, "name", None)
+            fallback_name = name.rsplit(".", 1)[-1] if name else None
+            cls.namespace = getattr(cls, "label", None) or fallback_name
 
-        if self.namespace is None:
-            self.namespace = self.name.rsplit(".", 1)[-1]
-
-        if self.label is None:
-            self.label = self.namespace
-    
+        # 2. Sync the label statically
+        if getattr(cls, "label", None) is None:
+            cls.label = cls.namespace
 
     def register(self) -> None:
         """
