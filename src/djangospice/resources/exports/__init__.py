@@ -1,6 +1,6 @@
-from .job import ResourceExport
+from .job import ResourceExportJob
 
 
 __all__ = [
-    "ResourceExport"
+    "ResourceExportJob"
 ]

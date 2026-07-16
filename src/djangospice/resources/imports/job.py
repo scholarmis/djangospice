@@ -1,21 +1,21 @@
-from typing import Any
 import tablib
-
+from typing import Any
+from dataclasses import dataclass
 from djangospice.jobs import Job, JobStatus
 from djangospice.realtime.broadcast import Broadcast
 from djangospice.resources import BaseResource
 from .dataset import TemporaryDataset 
 
 
-class ResourceImport(Job):
+@dataclass(kw_only=True)
+class ResourceImportJob(Job):
     
     queue = "data-imports"
+    resource: BaseResource
+    file_path: str
+    user_id: str
+    raise_errors: bool = True
 
-    def __init__(self, resource: BaseResource, file_path: str, user_id: str, raise_errors: bool = True) -> None:
-        self.resource = resource
-        self.file_path = file_path
-        self.user_id = user_id
-        self.raise_errors = raise_errors
 
     def handle(self) -> dict[str, Any]:
         # 1. The Context Manager handles all IO, parsing, and guaranteed cleanup

@@ -1,23 +1,22 @@
-import logging
 from typing import Any
+from dataclasses import dataclass
 from django.core.files.storage import default_storage
 from djangospice.jobs import Job, JobStatus
 from djangospice.realtime.broadcast import Broadcast
 from djangospice.resources import BaseResource
 from .exporter import ResourceExporter
 
-logger = logging.getLogger(__name__)
 
-
-class ResourceExport(Job):
+@dataclass(kw_only=True)
+class ResourceExportJob(Job):
     """Background job for heavy-duty data exports."""
+    
     queue = "data-exports"
     export_dir = "exports"
+    resource: BaseResource
+    user_id: str
+    rename_file: bool = False
     
-    def __init__(self, resource: BaseResource, user_id: str, rename_file: bool = False):
-        self.resource = resource
-        self.user_id = user_id
-        self.rename_file = rename_file
         
     def handle(self) -> dict[str, Any]:
         self.progress(10, 100, message="Initializing export...")

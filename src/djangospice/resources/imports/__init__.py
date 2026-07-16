@@ -1,3 +1,3 @@
-from .job import ResourceImport
+from .job import ResourceImportJob
 
-__all__ = ["ResourceImport"]
+__all__ = ["ResourceImportJob"]
