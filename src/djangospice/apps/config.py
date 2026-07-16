@@ -2,7 +2,24 @@ from importlib import import_module
 from django.apps import AppConfig as BaseConfig
 
 
-class AppConfig(BaseConfig):
+class AppConfigMeta(type):
+    def __new__(mcls, name, bases, attrs):
+        cls = super().__new__(mcls, name, bases, attrs)
+
+        if name != "AppConfig":
+            label = getattr(cls, "label", None)
+            app_name = getattr(cls, "name", None)
+
+            if getattr(cls, "namespace", None) is None:
+                if label:
+                    cls.namespace = label
+                elif app_name:
+                    cls.namespace = app_name.rsplit(".", 1)[-1]
+
+        return cls
+    
+    
+class AppConfig(BaseConfig, metaclass=AppConfigMeta):
     """
     Base configuration class for custom djangospice applications.
     Extends Django's AppConfig to integrate dependency injection and lifecycle hooks.
