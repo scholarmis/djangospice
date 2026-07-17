@@ -9,7 +9,7 @@ from django.http import HttpRequest
 from django.urls import reverse
 from djangospice.html.component import HTMLComponent
 from djangospice.response.response import Response
-from djangospice.widgets.action import BaseAction
+from djangospice.widgets.action import WidgetAction
 from djangospice.widgets.exceptions import WidgetNotVisible
 
 from .utils import slugify
@@ -104,7 +104,7 @@ class BaseWidget(HTMLComponent, ABC, metaclass=WidgetMetaclass):
     """
     
     NAMESPACE = "djangospice_widget"
-    actions: ClassVar[tuple[BaseAction, ...]] = ()
+    actions: ClassVar[tuple[WidgetAction, ...]] = ()
     _meta: WidgetOptions 
 
     def __init__(self, request: HttpRequest | None = None, **kwargs: Any) -> None:
@@ -234,7 +234,7 @@ class BaseWidget(HTMLComponent, ABC, metaclass=WidgetMetaclass):
         ctx["request"] = self.request
         return ctx
     
-    def get_action(self, name: str) -> BaseAction:
+    def get_action(self, name: str) -> WidgetAction:
         return self._actions.get(name)
     
     def response(self):
