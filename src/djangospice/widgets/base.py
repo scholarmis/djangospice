@@ -1,13 +1,16 @@
 from __future__ import annotations
 
 from abc import ABC
-from typing import Any
+from typing import Any, ClassVar
 from urllib.parse import urlencode
 from dataclasses import dataclass, fields
 from django.apps import apps
 from django.http import HttpRequest
 from django.urls import reverse
 from djangospice.html.component import HTMLComponent
+from djangospice.response.response import Response
+from djangospice.widgets.action import BaseAction
+from djangospice.widgets.exceptions import WidgetNotVisible
 
 from .utils import slugify
 
@@ -100,7 +103,8 @@ class BaseWidget(HTMLComponent, ABC, metaclass=WidgetMetaclass):
     Configuration should be defined within an inner `Meta` class.
     """
     
-    URL_NAME = "djangospice:widget"
+    NAMESPACE = "djangospice_widget"
+    actions: ClassVar[tuple[BaseAction, ...]] = ()
     _meta: WidgetOptions 
 
     def __init__(self, request: HttpRequest | None = None, **kwargs: Any) -> None:
@@ -109,9 +113,14 @@ class BaseWidget(HTMLComponent, ABC, metaclass=WidgetMetaclass):
         self.template_name = getattr(self._meta, "template_name", self.template_name)
         self.configure()
         
+        self._actions = {
+            action.name: action
+            for action in self.actions
+        }
+        
     def configure(self) -> None:
         if self.lazy:
-            self.htmx.request("get", self.endpoint) \
+            self.htmx.get(self.endpoint) \
                      .trigger_on("load") \
                      .swap_to("outerHTML") \
                      .target_to("this")
@@ -120,6 +129,17 @@ class BaseWidget(HTMLComponent, ABC, metaclass=WidgetMetaclass):
             trigger = self.htmx.trigger or "load"
             self.htmx.trigger_on(f"{trigger}, every {self.refresh_interval}s")
             self.htmx.target_to("this")
+            
+    def initialize(self) -> None:
+        """
+        Called once immediately after widget construction.
+
+        Use for internal setup only.
+        """
+        
+    def authorize(self) -> None:
+        if not self.visible():
+            raise WidgetNotVisible
 
     # ----------------------------------------------------------
     # Properties & Permissions
@@ -164,7 +184,7 @@ class BaseWidget(HTMLComponent, ABC, metaclass=WidgetMetaclass):
     def endpoint(self) -> str:
         """Calculates namespaced endpoint coordinates matching /app_label/widgets/name/"""
         base_url = reverse(
-            self.URL_NAME, 
+            self.NAMESPACE, 
             kwargs={"app_label": self.app_label, "name": self.name}
         )
         query_kwargs = {k: v for k, v in self.kwargs.items() if k != "id"}
@@ -180,7 +200,7 @@ class BaseWidget(HTMLComponent, ABC, metaclass=WidgetMetaclass):
         
         is_endpoint = (
             rm and 
-            rm.view_name == self.URL_NAME and 
+            rm.view_name == self.NAMESPACE and 
             rm.kwargs.get("app_label") == self.app_label and
             rm.kwargs.get("name") == self.name
         )
@@ -206,10 +226,37 @@ class BaseWidget(HTMLComponent, ABC, metaclass=WidgetMetaclass):
         user = self.user
         identifier = str(user.pk) if user and user.is_authenticated else "anonymous"
         digest = self._generate_state_hash()
-        return f"widget:{self.widget_key}:{identifier}:{digest}"
+        return f"{self.NAMESPACE}:{self.widget_key}:{identifier}:{digest}"
 
     def get_context(self) -> dict[str, Any]:
         ctx = super().get_context()
         ctx["widget"] = self
         ctx["request"] = self.request
         return ctx
+    
+    def get_action(self, name: str) -> BaseAction:
+        return self._actions.get(name)
+    
+    def response(self):
+        return Response.make(
+            self.template_name,
+            **self.get_context(),
+        )
+
+    def get(self, request: HttpRequest) -> Response:
+        return self.response()
+
+    def post(self, request: HttpRequest) -> Response:
+        return self.method_not_allowed(request)
+
+    def put(self, request: HttpRequest) -> Response:
+        return self.method_not_allowed(request)
+
+    def patch(self, request: HttpRequest) -> Response:
+        return self.method_not_allowed(request)
+
+    def delete(self, request: HttpRequest) -> Response:
+        return self.method_not_allowed(request)
+
+    def method_not_allowed(self, request: HttpRequest) -> Response:
+        return Response.empty(status=405)

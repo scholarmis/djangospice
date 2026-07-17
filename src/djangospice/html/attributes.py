@@ -34,15 +34,6 @@ class HTMXAttributes(Serializable):
     attrs: Payload = field(default_factory=Payload)
 
     # ------------------------------------------------------------------
-    # Requests
-    # ------------------------------------------------------------------
-    get: str | None = None
-    post: str | None = None
-    put: str | None = None
-    patch: str | None = None
-    delete: str | None = None
-
-    # ------------------------------------------------------------------
     # Swapping
     # ------------------------------------------------------------------
     target: str | None = None
@@ -154,6 +145,21 @@ class HTMXAttributes(Serializable):
             raise ValueError(f"Unsupported HTMX request method: {method}")
         setattr(self, method_lower, url)
         return self
+    
+    def get(self, url):
+        return self.request("get", url)
+    
+    def post(self, url):
+        return self.request("post", url)
+    
+    def put(self, url):
+        return self.request("put", url)
+    
+    def patch(self, url):
+        return self.request("path", url)
+    
+    def delete(self, url):
+        return self.request("delete", url)
 
     def swap_to(self, strategy: str) -> Self:
         self.swap = strategy
