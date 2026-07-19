@@ -4,7 +4,7 @@ from copy import deepcopy
 from typing import TYPE_CHECKING, Any, Iterable
 
 if TYPE_CHECKING:
-    from djangospice.widgets.actions.collection import ActionCollection
+    from djangospice.widgets.actions import ActionCollection
 
 from .options import WidgetOptions
 
