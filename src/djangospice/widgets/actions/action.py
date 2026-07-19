@@ -8,10 +8,11 @@ from django.core.exceptions import PermissionDenied
 from djangospice.html.attributes import HTMXAttributes
 from djangospice.response.response import Response
 
+from .metaclass import ActionMetaclass
 from .context import ActionContext
 
 
-class Action(ABC):
+class Action(ABC, metaclass=ActionMetaclass):
     """
     Base executable widget action.
     """
@@ -20,31 +21,26 @@ class Action(ABC):
     # Identity
     # ------------------------------------------------------------------
 
-    name: ClassVar[str]
-    label: ClassVar[str]
+    name: ClassVar[str | None] = None
+    label: ClassVar[str | None] = None
 
     # ------------------------------------------------------------------
     # Presentation
     # ------------------------------------------------------------------
 
     icon: ClassVar[str | None] = None
-
     description: ClassVar[str | None] = None
-
     css_class: ClassVar[str | None] = None
 
     order: ClassVar[int] = 100
-
-    groups: ClassVar[tuple[str, ...]] = ()
+    groups: ClassVar[str | tuple[str, ...]] = ()
 
     # ------------------------------------------------------------------
     # Behaviour
     # ------------------------------------------------------------------
 
     method: ClassVar[str] = "POST"
-
     permission: ClassVar[str | None] = None
-
     confirm: ClassVar[str | None] = None
 
     # ------------------------------------------------------------------
