@@ -1,11 +1,10 @@
 from abc import ABC, abstractmethod
 from django.http import HttpRequest
-from django.core.exceptions import PermissionDenied
 
 from djangospice.response.response import Response
 
-from .widget import BaseWidget
-from .context import ActionContext
+from djangospice.widgets.widget import BaseWidget
+from djangospice.widgets.actions.context import ActionContext
 
 
 class BaseDispatcher(ABC):
@@ -52,8 +51,7 @@ class ActionDispatcher(BaseDispatcher):
 
         return action.dispatch(context)
     
-    
-   
+
 class MethodDispatcher(BaseDispatcher):
     """
     Dispatches HTTP methods.

@@ -7,7 +7,7 @@ from functools import cached_property
 from .action import Action
 
 
-class Actions(Sequence[Action]):
+class ActionCollection(Sequence[Action]):
     """
     Immutable collection of widget actions.
 

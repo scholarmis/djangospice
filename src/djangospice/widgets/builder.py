@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 from typing import Any
 from django.template.loader import render_to_string
 from django.utils.safestring import SafeString, mark_safe

@@ -5,6 +5,7 @@ from functools import wraps
 from typing import Any
 
 from .registry import WidgetRegistry
+from .widget import BaseWidget
 
 
 def widget(
@@ -39,9 +40,6 @@ def widget(
     """
 
     def decorator(target_func: Callable[..., Any]) -> type:
-        # Import inside the closure to prevent circular imports during module initialization
-        from .base import BaseWidget
-
         # Convert snake_case function name to CamelCase (e.g., 'user_stats' -> 'UserStatsWidget')
         camel_name = "".join(word.capitalize() for word in target_func.__name__.split("_"))
         class_name = f"{camel_name}BaseWidget"
