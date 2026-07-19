@@ -5,6 +5,7 @@ from dataclasses import dataclass, fields
 from copy import deepcopy
 
 from django.apps import apps
+from django.db.models import Model
 
 from .actions import Actions
 
@@ -28,6 +29,10 @@ class WidgetOptions:
     lazy: bool = False
     refreshable: bool = False
     refresh_interval: int | None = None
+    
+    model: type[Model] | None = None
+    object_parameter = "selected_id"
+    objects_parameter = "selected_ids"
 
     @classmethod
     def from_meta(cls, meta: type | None, class_name: str, module_path: str) -> WidgetOptions:

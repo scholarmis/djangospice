@@ -3,6 +3,8 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import ClassVar
 
+from django.core.exceptions import PermissionDenied
+
 from djangospice.html.attributes import HTMXAttributes
 from djangospice.response.response import Response
 
@@ -91,6 +93,23 @@ class Action(ABC):
             )
             .with_vals(action=self.name)
         )
+        
+    def dispatch(self, context: ActionContext) -> Response:
+
+        if not self.enabled(context):
+            raise PermissionDenied(
+                f"Action '{self.name}' is disabled."
+            )
+
+        self.authorize(context)
+
+        self.before_execute(context)
+
+        response = self.execute(context)
+
+        self.after_execute(context)
+
+        return response
 
     # ------------------------------------------------------------------
     # Execute

@@ -4,10 +4,11 @@ from abc import ABC
 from typing import Any, ClassVar
 from urllib.parse import urlencode
 
-from django.apps import apps
 from django.http import HttpRequest
+from django.db.models import QuerySet
 from django.urls import reverse
 
+from djangospice.core.payload import Payload
 from djangospice.html.component import HTMLComponent
 from djangospice.response.response import Response
 
@@ -31,8 +32,8 @@ class BaseWidget(HTMLComponent, ABC, metaclass=WidgetMetaclass):
     Execution is delegated to WidgetExecutor.
     """
 
-    NAMESPACE = "djangospice_widget"
-
+    namespace = "djangospice_widget"
+    
     actions: ClassVar[Actions] = Actions()
 
     _meta: WidgetOptions
@@ -174,7 +175,7 @@ class BaseWidget(HTMLComponent, ABC, metaclass=WidgetMetaclass):
         """
 
         url = reverse(
-            self.NAMESPACE,
+            self.namespace,
             kwargs={
                 "app_label": self.app_label,
                 "name": self.name,
@@ -209,7 +210,7 @@ class BaseWidget(HTMLComponent, ABC, metaclass=WidgetMetaclass):
 
         return (
             match
-            and match.view_name == self.NAMESPACE
+            and match.view_name == self.namespace
             and match.kwargs.get("app_label") == self.app_label
             and match.kwargs.get("name") == self.name
         )
@@ -259,7 +260,7 @@ class BaseWidget(HTMLComponent, ABC, metaclass=WidgetMetaclass):
         )
 
         return (
-            f"{self.NAMESPACE}:"
+            f"{self.namespace}:"
             f"{self.widget_key}:"
             f"{identifier}:"
             f"{self._generate_state_hash()}"
@@ -289,14 +290,80 @@ class BaseWidget(HTMLComponent, ABC, metaclass=WidgetMetaclass):
             self.template_name,
             **self.get_context(),
         )
+        
+    
+    def get_queryset(self) -> QuerySet:
+        """
+        Return the base queryset for this widget.
 
-    # ==================================================================
-    # HTTP Handlers
-    #
-    # WidgetExecutor chooses which handler to call.
-    # These methods never receive a request parameter because the request
-    # is already bound to the widget.
-    # ==================================================================
+        Widgets may override this to apply filtering, permissions,
+        annotations, etc.
+        """
+        if self._meta.model is None:
+            raise NotImplementedError(
+                f"{self.__class__.__name__} must define 'model' "
+                "or override get_queryset()."
+            )
+
+        return self._meta.model._default_manager.all()
+
+    def get_object(self):
+        """
+        Return the currently selected object.
+        """
+
+        if self.request is None:
+            return None
+
+        pk = (
+            self.request.POST.get(self._meta.object_parameter)
+            or self.request.GET.get(self._meta.object_parameter)
+        )
+
+        if not pk:
+            return None
+
+        return self.get_queryset().filter(pk=pk).first()
+
+    def get_objects(self):
+        """
+        Return the currently selected objects.
+        """
+
+        if self.request is None:
+            return ()
+
+        ids = (
+            self.request.POST.getlist(self._meta.objects_parameter)
+            or self.request.GET.getlist(self._meta.objects_parameter)
+        )
+
+        if not ids:
+            obj = self.get_object()
+            return (obj,) if obj else ()
+
+        return tuple(
+            self.get_queryset().filter(pk__in=ids)
+        )
+
+
+    def get_data(self) -> Payload:
+        """
+        Return the widget's input data.
+
+        By default this is built from the current request.
+
+        Widgets may override this to return validated, cleaned or computed
+        data instead.
+        """
+        if self.request is None:
+            return Payload()
+
+        if self.request.method in ("POST", "PUT", "PATCH"):
+            return Payload.from_dict(self.request.POST)
+
+        return Payload.from_dict(self.request.GET)
+
 
     def get(self) -> Response:
         return self.response()

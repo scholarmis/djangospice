@@ -45,22 +45,13 @@ class ActionDispatcher(BaseDispatcher):
         context = ActionContext(
             widget=self.widget,
             request=self.request,
+            object=self.widget.get_object(),
+            objects=self.widget.get_objects(),
+            data=self.widget.get_data(),
         )
 
-        if not action.enabled(context):
-            raise PermissionDenied(
-                f"Action '{name}' is disabled."
-            )
-
-        action.authorize(context)
-
-        action.before_execute(context)
-
-        response = action.execute(context)
-
-        action.after_execute(context)
-
-        return response
+        return action.dispatch(context)
+    
     
    
 class MethodDispatcher(BaseDispatcher):
