@@ -6,8 +6,8 @@ from typing import Any
 from django.core.cache import cache
 from django.utils.safestring import SafeString
 
-from .base import BaseWidget
 from .builder import WidgetBuilder
+from .widget import BaseWidget
 
 
 class WidgetCache:

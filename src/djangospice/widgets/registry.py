@@ -7,7 +7,9 @@ from collections.abc import Iterator
 from django.core.exceptions import ImproperlyConfigured
 
 from djangospice.apps.discovery import ModuleDiscovery
-from .base import BaseWidget
+
+from .widget import BaseWidget
+
 
 logger = logging.getLogger(__name__)
 

@@ -1,6 +1,6 @@
 from typing import Any
 
-from .base import BaseWidget
+from .widget import BaseWidget
 
 
 class Placeholder(BaseWidget):

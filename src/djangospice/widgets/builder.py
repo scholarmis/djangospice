@@ -4,8 +4,8 @@ from django.template.loader import render_to_string
 from django.utils.safestring import SafeString, mark_safe
 
 from .assets import AssetRegistry
-from .base import BaseWidget
 from .exceptions import WidgetError
+from .widget import BaseWidget
 
 
 class WidgetBuilder:

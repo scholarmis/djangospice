@@ -1,6 +1,6 @@
 from django.urls import path
 
-from djangospice.widgets.views import WidgetView
+from .views import WidgetView
 
 urlpatterns = [
     path(
