@@ -15,7 +15,6 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.utils.functional import Promise
 from django.db import connection, models
 from django.core.exceptions import ValidationError
-from djangospice.enums.runtime import ProcessStatus
 from .managers import SequenceManager
 from .mixins import SerializesModels
 
@@ -602,8 +601,9 @@ class Versionable(BaseModel):
 
 class BaseConfig(UUIDModel):
     DATA_TYPE_CHOICES = [
-        ("string", "String"),
-        ("integer", "Integer"),
+        ("text", "Text"),
+        ("number", "Number"),
+        ("decimal", "Decimal"),
         ("boolean", "Boolean"),
         ("list", "List"),
         ("date", "Date"),
@@ -642,8 +642,10 @@ class BaseConfig(UUIDModel):
 
     def parse_value(self, value, data_type):
         """Parse the value based on the data type."""
-        if data_type == "integer":
+        if data_type == "number":
             return int(value)
+        if data_type == "decimal":
+            return Decimal(value)
         elif data_type == "boolean":
             return str(value).lower() in ["true", "1", "yes"]
         elif data_type == "list":
@@ -703,31 +705,3 @@ class BaseConfig(UUIDModel):
         self.default = self.format_value(value, self.type)
         self.save()
 
-
-class ProcessMixin:
-
-    def set_pending(self):
-        self.status = ProcessStatus.PENDING
-    
-    def set_processing(self):
-        self.status = ProcessStatus.PROCESSING
-
-    def set_ready(self):
-        self.status = ProcessStatus.READY
-
-    def set_error(self, error):
-        self.error = error
-        self.status = ProcessStatus.ERROR
-
-    def is_pending(self):
-        return self.status == ProcessStatus.PENDING
-        
-    def is_processing(self):
-        return self.status == ProcessStatus.PROCESSING
-        
-    def is_ready(self):
-        return self.status == ProcessStatus.READY
-
-    def is_error(self):
-        return self.status == ProcessStatus.ERROR
-   
