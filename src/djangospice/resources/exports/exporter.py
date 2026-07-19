@@ -2,8 +2,8 @@ from dataclasses import asdict
 from typing import Any, Optional
 from tablib import Dataset
 
-from djangospice.xlsx.exporter import Exporter
-from djangospice.xlsx.reference import ReferenceMapBuilder
+from djangospice.excel.exporter import Exporter
+from djangospice.excel.reference import ReferenceMapBuilder
 from djangospice.resources import BaseResource
 
 
