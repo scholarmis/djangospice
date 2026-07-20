@@ -6,7 +6,7 @@ from djangospice.widgets.exceptions import WidgetNotVisible
 
 from .builder import WidgetBuilder
 from .cache import WidgetCache
-from .widget import BaseWidget
+from .widget import Widget
 from .placeholder import Placeholder
 
 
@@ -14,7 +14,7 @@ from .placeholder import Placeholder
 class WidgetRenderer:
 
 
-    def __init__(self, widget: BaseWidget) -> None:
+    def __init__(self, widget: Widget) -> None:
         """
         Initialize the WidgetExecutor.
 
@@ -68,7 +68,7 @@ class WidgetRenderer:
         """
         if not self.widget.visible():
             raise WidgetNotVisible(
-                f"BaseWidget '{self.widget.name}' (`{self.widget.__class__.__name__}`) "
+                f"Widget '{self.widget.name}' (`{self.widget.__class__.__name__}`) "
                 "is not visible in the current context."
             )
 

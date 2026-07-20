@@ -1,9 +1,9 @@
 from typing import Any
 
-from .widget import BaseWidget
+from .widget import Widget
 
 
-class Placeholder(BaseWidget):
+class Placeholder(Widget):
     
     """System level specialized element creating DOM skeleton attachment points."""
     

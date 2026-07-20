@@ -8,7 +8,7 @@ from django.http import HttpRequest
 from djangospice.core.payload import Payload
 
 if TYPE_CHECKING:
-    from djangospice.widgets.widget import BaseWidget
+    from djangospice.widgets.widget import Widget
 
 
 @dataclass(slots=True)
@@ -17,7 +17,7 @@ class ActionContext:
     Runtime context supplied to an Action.
     """
 
-    widget: "BaseWidget"
+    widget: "Widget"
 
     request: HttpRequest
 

@@ -7,7 +7,7 @@ from django.core.cache import cache
 from django.utils.safestring import SafeString
 
 from .builder import WidgetBuilder
-from .widget import BaseWidget
+from .widget import Widget
 
 
 class WidgetCache:
@@ -22,7 +22,7 @@ class WidgetCache:
     PREFIX = "widget"
 
     @classmethod
-    def cache_digest(cls, widget: BaseWidget) -> str:
+    def cache_digest(cls, widget: Widget) -> str:
         """
         Generate a predictable, hashed string based on the cache key.
 
@@ -32,12 +32,12 @@ class WidgetCache:
         Returns:
             A SHA256 hex digest representing the unique cache state.
         """
-        # BaseWidget.cache_key() now returns a formatted string
+        # Widget.cache_key() now returns a formatted string
         key_str = widget.cache_key()
         return sha256(key_str.encode("utf-8")).hexdigest()
 
     @classmethod
-    def key(cls, widget: BaseWidget) -> str:
+    def key(cls, widget: Widget) -> str:
         """
         Generate the full cache key for a given widget.
 
@@ -50,7 +50,7 @@ class WidgetCache:
         return f"{cls.PREFIX}:{cls.cache_digest(widget)}"
 
     @classmethod
-    def get(cls, widget: BaseWidget) -> Any | None:
+    def get(cls, widget: Widget) -> Any | None:
         """
         Retrieve a widget's cached response, if available.
 
@@ -66,7 +66,7 @@ class WidgetCache:
         return cache.get(cls.key(widget))
 
     @classmethod
-    def set(cls, widget: BaseWidget, value: Any) -> Any:
+    def set(cls, widget: Widget, value: Any) -> Any:
         """
         Store a widget's rendered output in the cache.
 
@@ -88,7 +88,7 @@ class WidgetCache:
         return value
 
     @classmethod
-    def delete(cls, widget: BaseWidget) -> None:
+    def delete(cls, widget: Widget) -> None:
         """
         Remove a specific widget's response from the cache.
 
@@ -98,7 +98,7 @@ class WidgetCache:
         cache.delete(cls.key(widget))
 
     @classmethod
-    def exists(cls, widget: BaseWidget) -> bool:
+    def exists(cls, widget: Widget) -> bool:
         """
         Check if a valid cached response exists for the widget.
         Uses `has_key` to avoid pulling large HTML payloads into memory.
@@ -115,7 +115,7 @@ class WidgetCache:
         return cache.has_key(cls.key(widget))
 
     @classmethod
-    def refresh(cls, widget: BaseWidget) -> None:
+    def refresh(cls, widget: Widget) -> None:
         """
         Invalidate the cache for a specific widget.
 
@@ -135,7 +135,7 @@ class WidgetCache:
         cache.clear()
 
     @classmethod
-    def get_or_set(cls, widget: BaseWidget) -> SafeString | Any:
+    def get_or_set(cls, widget: Widget) -> SafeString | Any:
         """
         Retrieve the cached widget content, or render and cache it if missing.
 

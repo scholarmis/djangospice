@@ -3,13 +3,13 @@ from django.http import HttpRequest
 
 from djangospice.response.response import Response
 
-from djangospice.widgets.widget import BaseWidget
+from djangospice.widgets.widget import Widget
 from djangospice.widgets.actions.context import ActionContext
 
 
 class BaseDispatcher(ABC):
     
-    def __init__(self, widget: BaseWidget, request: HttpRequest):
+    def __init__(self, widget: Widget, request: HttpRequest):
         self.widget = widget
         self.request = request
         

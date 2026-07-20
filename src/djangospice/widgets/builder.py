@@ -6,7 +6,7 @@ from django.utils.safestring import SafeString, mark_safe
 
 from .assets import AssetRegistry
 from .exceptions import WidgetError
-from .widget import BaseWidget
+from .widget import Widget
 
 
 class WidgetBuilder:
@@ -15,7 +15,7 @@ class WidgetBuilder:
     flexible content types returned by the widget.
     """
 
-    def __init__(self, widget: BaseWidget, registry: AssetRegistry = None) -> None:
+    def __init__(self, widget: Widget, registry: AssetRegistry = None) -> None:
         self.widget = widget
         self.registry = registry
 
@@ -49,7 +49,7 @@ class WidgetBuilder:
         try:
             template = self.widget.get_template()
         except ValueError as e:
-            # Unify exceptions: Catch BaseWidget's ValueError and raise as Configuration Error
+            # Unify exceptions: Catch Widget's ValueError and raise as Configuration Error
             raise WidgetError(str(e)) from e
 
         if not template:

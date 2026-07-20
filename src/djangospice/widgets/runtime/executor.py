@@ -1,7 +1,7 @@
 from django.http import HttpRequest
 from djangospice.response.response import Response
 
-from djangospice.widgets.widget import BaseWidget
+from djangospice.widgets.widget import Widget
 from djangospice.widgets.exceptions import DispatcherNotFound
 
 from .dispatchers import ActionDispatcher, MethodDispatcher
@@ -17,7 +17,7 @@ class WidgetExecutor:
         MethodDispatcher,
     )
 
-    def __init__(self, widget: BaseWidget, request: HttpRequest) -> None:
+    def __init__(self, widget: Widget, request: HttpRequest) -> None:
 
         self.widget = widget
         self.request = request

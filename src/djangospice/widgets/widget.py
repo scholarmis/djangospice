@@ -23,7 +23,7 @@ if TYPE_CHECKING:
     from djangospice.widgets.actions import ActionCollection
 
 
-class BaseWidget(
+class Widget(
     WidgetMetadataMixin,
     WidgetHTMXMixin,
     WidgetVisibilityMixin,

@@ -5,7 +5,7 @@ from functools import wraps
 from typing import Any
 
 from .registry import WidgetRegistry
-from .widget import BaseWidget
+from .widget import Widget
 
 
 def widget(
@@ -26,9 +26,9 @@ def widget(
     
 ) -> Callable[..., Any] | type:
     """
-    Transforms a standard function into a registered UI BaseWidget class.
+    Transforms a standard function into a registered UI Widget class.
 
-    This decorator dynamically generates a `BaseWidget` subclass based on the 
+    This decorator dynamically generates a `Widget` subclass based on the 
     provided function and metadata, and automatically registers it with the 
     `WidgetRegistry`.
 
@@ -36,13 +36,13 @@ def widget(
     - If it returns a `dict`: It merges the dictionary into `get_context_data`.
     - If it returns a `str`: It maps the string to `get_content` (bypassing templates).
     Returns:
-        The dynamically generated BaseWidget subclass, or a decorator function.
+        The dynamically generated Widget subclass, or a decorator function.
     """
 
     def decorator(target_func: Callable[..., Any]) -> type:
         # Convert snake_case function name to CamelCase (e.g., 'user_stats' -> 'UserStatsWidget')
         camel_name = "".join(word.capitalize() for word in target_func.__name__.split("_"))
-        class_name = f"{camel_name}BaseWidget"
+        class_name = f"{camel_name}Widget"
 
         # 1. Dynamically build the inner Meta class based on provided kwargs
         # We filter out None values so that the WidgetOptions dataclass applies its defaults
@@ -65,19 +65,19 @@ def widget(
         
         Meta = type("Meta", (), meta_attrs)
 
-        # 2. Construct the subclass of BaseWidget with the Meta class attached
-        FunctionWidget = type(class_name, (BaseWidget,), {"Meta": Meta})
+        # 2. Construct the subclass of Widget with the Meta class attached
+        FunctionWidget = type(class_name, (Widget,), {"Meta": Meta})
 
         # 3. Create a cached executor to prevent running the function twice 
         # (since it might be checked by both get_content and get_context_data)
-        def _execute_func(self_instance: BaseWidget) -> Any:
+        def _execute_func(self_instance: Widget) -> Any:
             if not hasattr(self_instance, "_func_result"):
                 self_instance._func_result = target_func(self_instance)
             return self_instance._func_result
 
         # 4. Wire up the Smart Hooks
         @wraps(target_func)
-        def get_content(self: BaseWidget) -> str | dict | None:
+        def get_content(self: Widget) -> str | dict | None:
             result = _execute_func(self)
             
             # If the user returns a string (like HTML/SafeString), render directly
@@ -87,7 +87,7 @@ def widget(
             return super(FunctionWidget, self).get_content()
 
         @wraps(target_func)
-        def get_context(self: BaseWidget) -> dict[str, Any]:
+        def get_context(self: Widget) -> dict[str, Any]:
             context = super(FunctionWidget, self).get_context()
             result = _execute_func(self)
             
